@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { FileItem } from '../types';
 import { STORAGE_KEY } from '../constants';
-import { SerializableFileItem, serializeFileItem, deserializeFileItem } from './storage';
+import { SerializableFileItem, serializeFileItem, deserializeFileItem } from '../utils/storage';
 
 export const useLocalStorage = (
   files: FileItem[],
