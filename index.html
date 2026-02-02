@@ -1,61 +1,82 @@
-
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>파일명 일괄 변경툴 - v1.0 Premium</title>
-    
-    <!-- SEO 및 소셜 메타 태그 -->
-    <meta name="description" content="브라우저에서 즉시 작동하는 고성능 파일명 일괄 변경 도구. 개인정보 유출 걱정 없는 100% 로컬 처리 방식.">
-    <meta property="og:title" content="파일명 일괄 변경툴 - Premium">
-    <meta property="og:description" content="수백 개의 파일을 한 번에! 설치 없이 브라우저에서 바로 사용하는 스마트 리네이머.">
-    <meta property="og:type" content="website">
-    <meta name="theme-color" content="#030712">
-    
-    <!-- 이모지 파비콘 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>파일명 일괄 변경툴</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #030712;
-            color: #f8fafc;
-            -webkit-font-smoothing: antialiased;
-            font-size: 16px; /* 기본 폰트 크기 16px 보장 */
-        }
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
-        .premium-blur {
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-        /* 입력창 폰트 크기 강제 적용 (iOS 등에서 확대 방지 및 가독성) */
-        input, select, textarea, button {
-            font-size: 16px !important;
-        }
-    </style>
+  <!-- SEO 및 소셜 메타 태그 -->
+  <meta name="description" content="브라우저에서 즉시 작동하는 고성능 파일명 일괄 변경 도구. 개인정보 유출 걱정 없는 100% 로컬 처리 방식.">
+  <meta property="og:title" content="파일명 일괄 변경툴">
+  <meta property="og:description" content="수백 개의 파일을 한 번에! 설치 없이 브라우저에서 바로 사용하는 스마트 리네이머.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#030712">
 
-    <script type="importmap">
+  <!-- 이모지 파비콘 -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'D2Coding';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.0/D2Coding.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'D2Coding', monospace;
+      background-color: #030712;
+      color: #f8fafc;
+      -webkit-font-smoothing: antialiased;
+      font-size: 16px;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      /* 기본 폰트 크기 16px 보장 */
+    }
+
+    .mono {
+      font-family: 'D2Coding', monospace;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    .premium-blur {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* 입력창 폰트 크기 강제 적용 (iOS 등에서 확대 방지 및 가독성) */
+    input,
+    select,
+    textarea,
+    button {
+      font-size: 16px !important;
+      font-family: 'D2Coding', monospace !important;
+    }
+  </style>
+
+  <script type="importmap">
     {
       "imports": {
         "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
@@ -66,11 +87,13 @@
       }
     }
     </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
+
 <body>
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.tsx"></script>
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
