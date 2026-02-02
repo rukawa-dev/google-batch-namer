@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { FileItem, RenameAction, RenameParams } from './types';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
@@ -24,9 +24,59 @@ const RENAME_ACTIONS: { label: string; action: RenameAction; group: 'name' | 'ex
   { label: '확장자 변경', action: 'EXT_CHANGE', group: 'ext' },
 ];
 
+const STORAGE_KEY = 'landverse-batch-namer-state';
+
+// FileItem을 저장 가능한 형태로 변환 (File 객체 제외)
+interface SerializableFileItem {
+  id: string;
+  originalName: string;
+  originalExt: string;
+  newName: string;
+  newExt: string;
+  path?: string;
+  fileName: string; // 원본 파일명 저장
+  fileSize: number;
+  fileType: string;
+}
+
+const serializeFileItem = (item: FileItem): SerializableFileItem => ({
+  id: item.id,
+  originalName: item.originalName,
+  originalExt: item.originalExt,
+  newName: item.newName,
+  newExt: item.newExt,
+  path: item.path,
+  fileName: item.file.name,
+  fileSize: item.file.size,
+  fileType: item.file.type,
+});
+
+const deserializeFileItem = (item: SerializableFileItem): FileItem | null => {
+  // File 객체를 복원할 수 없으므로 더미 File 생성
+  // 실제 파일 내용은 없지만 메타데이터는 유지
+  try {
+    const dummyFile = new File([], item.fileName, { type: item.fileType });
+    Object.defineProperty(dummyFile, 'size', { value: item.fileSize });
+
+    return {
+      id: item.id,
+      file: dummyFile,
+      originalName: item.originalName,
+      originalExt: item.originalExt,
+      newName: item.newName,
+      newExt: item.newExt,
+      path: item.path,
+    };
+  } catch (e) {
+    console.error('Failed to deserialize file item:', e);
+    return null;
+  }
+};
+
 const App: React.FC = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [history, setHistory] = useState<FileItem[][]>([]);
+  const [redoStack, setRedoStack] = useState<FileItem[][]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
@@ -35,6 +85,77 @@ const App: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
+  const isInitialMount = useRef(true);
+
+  // 초기 로드 시 localStorage에서 상태 복원
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      console.log('[LocalStorage] Restoring state:', saved ? 'Data found' : 'No data');
+
+      if (saved) {
+        const { files: savedFiles, history: savedHistory, redoStack: savedRedoStack } = JSON.parse(saved);
+
+        if (savedFiles && Array.isArray(savedFiles)) {
+          const restoredFiles = savedFiles
+            .map((item: SerializableFileItem) => deserializeFileItem(item))
+            .filter((item): item is FileItem => item !== null);
+          console.log('[LocalStorage] Restored files:', restoredFiles.length);
+          setFiles(restoredFiles);
+        }
+
+        if (savedHistory && Array.isArray(savedHistory)) {
+          const restoredHistory = savedHistory
+            .map((historyItems: SerializableFileItem[]) =>
+              historyItems
+                .map(item => deserializeFileItem(item))
+                .filter((item): item is FileItem => item !== null)
+            )
+            .filter((items: FileItem[]) => items.length > 0);
+          setHistory(restoredHistory);
+        }
+
+        if (savedRedoStack && Array.isArray(savedRedoStack)) {
+          const restoredRedoStack = savedRedoStack
+            .map((redoItems: SerializableFileItem[]) =>
+              redoItems
+                .map(item => deserializeFileItem(item))
+                .filter((item): item is FileItem => item !== null)
+            )
+            .filter((items: FileItem[]) => items.length > 0);
+          setRedoStack(restoredRedoStack);
+        }
+      }
+    } catch (e) {
+      console.error('[LocalStorage] Failed to restore state:', e);
+    }
+
+    // 복원 완료 후 플래그 설정
+    setTimeout(() => {
+      isInitialMount.current = false;
+      console.log('[LocalStorage] Initial mount complete, auto-save enabled');
+    }, 100);
+  }, []);
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (isInitialMount.current) {
+      console.log('[LocalStorage] Skipping save during initial mount');
+      return;
+    }
+
+    try {
+      const stateToSave = {
+        files: files.map(serializeFileItem),
+        history: history.map(items => items.map(serializeFileItem)),
+        redoStack: redoStack.map(items => items.map(serializeFileItem)),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      console.log('[LocalStorage] Saved state:', files.length, 'files');
+    } catch (e) {
+      console.error('[LocalStorage] Failed to save state:', e);
+    }
+  }, [files, history, redoStack]);
 
   const duplicateNames = useMemo(() => {
     const counts = new Map<string, number>();
@@ -119,6 +240,7 @@ const App: React.FC = () => {
   const executeAction = (action: RenameAction, currentParams: RenameParams) => {
     setHistory(prev => [...prev, [...files]]);
     setFiles(prev => applyRenaming(prev, action, currentParams));
+    setRedoStack([]); // 새 작업 시 redo 스택 초기화
     setModalOpen(false);
   };
 
@@ -130,8 +252,16 @@ const App: React.FC = () => {
 
   const undo = () => {
     if (history.length === 0) return;
+    setRedoStack(prev => [...prev, [...files]]);
     setFiles(history[history.length - 1]);
     setHistory(prev => prev.slice(0, -1));
+  };
+
+  const redo = () => {
+    if (redoStack.length === 0) return;
+    setHistory(prev => [...prev, [...files]]);
+    setFiles(redoStack[redoStack.length - 1]);
+    setRedoStack(prev => prev.slice(0, -1));
   };
 
   const exportAsZip = async () => {
@@ -189,6 +319,7 @@ const App: React.FC = () => {
           </h1>
         </div>
         <div className="flex gap-3">
+          <Button variant="danger" size="sm" onClick={() => { if (confirm('모든 파일 목록을 초기화하시겠습니까?')) { setFiles([]); setHistory([]); setRedoStack([]); localStorage.removeItem(STORAGE_KEY); } }}>초기화</Button>
           <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>파일 추가</Button>
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={e => e.target.files && handleFiles(e.target.files)} />
           <Button
@@ -318,8 +449,8 @@ const App: React.FC = () => {
           {/* 푸터 통계 */}
           <footer className="bg-gray-900 border-t border-white/10 px-8 py-4 flex justify-between items-center shrink-0 z-10">
             <div className="flex gap-4">
-              <Button variant="secondary" size="sm" onClick={undo} disabled={history.length === 0} className="text-base font-bold">작업 취소 (Undo)</Button>
-              <Button variant="ghost" size="sm" onClick={() => { if (confirm('목록을 모두 비우시겠습니까?')) { setFiles([]); setHistory([]); } }} className="text-red-400 hover:bg-red-500/10 text-base font-bold">목록 비우기</Button>
+              <Button variant="secondary" size="sm" onClick={undo} disabled={history.length === 0} className="text-base font-bold">한 단계 이전</Button>
+              <Button variant="secondary" size="sm" onClick={redo} disabled={redoStack.length === 0} className="text-base font-bold">한 단계 다음</Button>
             </div>
             <div className="flex gap-10 items-center text-lg font-bold text-slate-400">
               <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-slate-600"></span>총 {files.length}개 항목</span>
