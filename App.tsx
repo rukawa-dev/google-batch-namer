@@ -4,74 +4,15 @@ import { FileItem, RenameAction, RenameParams } from './types';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { applyRenaming, getFullNewName } from './logic/renamingLogic';
+import { STORAGE_KEY, RENAME_ACTIONS } from './constants';
+import {
+  SerializableFileItem,
+  serializeFileItem,
+  deserializeFileItem
+} from './utils/storage';
 
-// 외부 라이브러리 선언
 declare const JSZip: any;
 
-const RENAME_ACTIONS: { label: string; action: RenameAction; group: 'name' | 'ext' }[] = [
-  { label: '이름 지우기', action: 'CLEAR_NAME', group: 'name' },
-  { label: '문자열 바꾸기', action: 'REPLACE', group: 'name' },
-  { label: '앞이름 붙이기', action: 'PREFIX', group: 'name' },
-  { label: '뒷이름 붙이기', action: 'SUFFIX', group: 'name' },
-  { label: '괄호안 지우기', action: 'CLEAR_BRACKETS', group: 'name' },
-  { label: '숫자만 지우기', action: 'REMOVE_NUMBERS', group: 'name' },
-  { label: '숫자만 남기기', action: 'NUMBERS_ONLY', group: 'name' },
-  { label: '자릿수 맞추기', action: 'PADDING', group: 'name' },
-  { label: '번호 붙이기', action: 'NUMBERING', group: 'name' },
-  { label: '난수로 변경', action: 'RANDOM', group: 'name' },
-  { label: '확장자 삭제', action: 'EXT_DELETE', group: 'ext' },
-  { label: '확장자 추가', action: 'EXT_ADD', group: 'ext' },
-  { label: '확장자 변경', action: 'EXT_CHANGE', group: 'ext' },
-];
-
-const STORAGE_KEY = 'landverse-batch-namer-state';
-
-// FileItem을 저장 가능한 형태로 변환 (File 객체 제외)
-interface SerializableFileItem {
-  id: string;
-  originalName: string;
-  originalExt: string;
-  newName: string;
-  newExt: string;
-  path?: string;
-  fileName: string; // 원본 파일명 저장
-  fileSize: number;
-  fileType: string;
-}
-
-const serializeFileItem = (item: FileItem): SerializableFileItem => ({
-  id: item.id,
-  originalName: item.originalName,
-  originalExt: item.originalExt,
-  newName: item.newName,
-  newExt: item.newExt,
-  path: item.path,
-  fileName: item.file.name,
-  fileSize: item.file.size,
-  fileType: item.file.type,
-});
-
-const deserializeFileItem = (item: SerializableFileItem): FileItem | null => {
-  // File 객체를 복원할 수 없으므로 더미 File 생성
-  // 실제 파일 내용은 없지만 메타데이터는 유지
-  try {
-    const dummyFile = new File([], item.fileName, { type: item.fileType });
-    Object.defineProperty(dummyFile, 'size', { value: item.fileSize });
-
-    return {
-      id: item.id,
-      file: dummyFile,
-      originalName: item.originalName,
-      originalExt: item.originalExt,
-      newName: item.newName,
-      newExt: item.newExt,
-      path: item.path,
-    };
-  } catch (e) {
-    console.error('Failed to deserialize file item:', e);
-    return null;
-  }
-};
 
 const App: React.FC = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -91,8 +32,6 @@ const App: React.FC = () => {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      console.log('[LocalStorage] Restoring state:', saved ? 'Data found' : 'No data');
-
       if (saved) {
         const { files: savedFiles, history: savedHistory, redoStack: savedRedoStack } = JSON.parse(saved);
 
@@ -100,7 +39,6 @@ const App: React.FC = () => {
           const restoredFiles = savedFiles
             .map((item: SerializableFileItem) => deserializeFileItem(item))
             .filter((item): item is FileItem => item !== null);
-          console.log('[LocalStorage] Restored files:', restoredFiles.length);
           setFiles(restoredFiles);
         }
 
@@ -127,22 +65,17 @@ const App: React.FC = () => {
         }
       }
     } catch (e) {
-      console.error('[LocalStorage] Failed to restore state:', e);
+      console.error('Failed to restore state from localStorage:', e);
     }
 
-    // 복원 완료 후 플래그 설정
     setTimeout(() => {
       isInitialMount.current = false;
-      console.log('[LocalStorage] Initial mount complete, auto-save enabled');
     }, 100);
   }, []);
 
   // 상태 변경 시 localStorage에 저장
   useEffect(() => {
-    if (isInitialMount.current) {
-      console.log('[LocalStorage] Skipping save during initial mount');
-      return;
-    }
+    if (isInitialMount.current) return;
 
     try {
       const stateToSave = {
@@ -151,9 +84,8 @@ const App: React.FC = () => {
         redoStack: redoStack.map(items => items.map(serializeFileItem)),
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-      console.log('[LocalStorage] Saved state:', files.length, 'files');
     } catch (e) {
-      console.error('[LocalStorage] Failed to save state:', e);
+      console.error('Failed to save state to localStorage:', e);
     }
   }, [files, history, redoStack]);
 
