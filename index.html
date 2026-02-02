@@ -4,10 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>파일명 일괄 변경툴 - Premium</title>
+    <title>파일명 일괄 변경툴 - v1.0 Premium</title>
+    
+    <!-- SEO 및 소셜 메타 태그 -->
+    <meta name="description" content="브라우저에서 즉시 작동하는 고성능 파일명 일괄 변경 도구. 개인정보 유출 걱정 없는 100% 로컬 처리 방식.">
+    <meta property="og:title" content="파일명 일괄 변경툴 - Premium">
+    <meta property="og:description" content="수백 개의 파일을 한 번에! 설치 없이 브라우저에서 바로 사용하는 스마트 리네이머.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#030712">
+    
+    <!-- 이모지 파비콘 (별도 이미지 파일 없이 아이콘 설정) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -38,17 +50,20 @@
             -webkit-backdrop-filter: blur(12px);
         }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4"
-  }
-}
-</script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "react/": "https://esm.sh/react@^19.2.4/",
+        "react": "https://esm.sh/react@^19.2.4"
+      }
+    }
+    </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- 모듈 스크립트 로드 (GitHub Pages의 상대 경로 대응) -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
