@@ -1,0 +1,5 @@
+{
+  "name": "📌 파일명 일괄 변경 프로그램",
+  "description": "A high-performance web-based batch file renaming utility inspired by DarkNamer. Features real-time preview, complex string manipulations, and bulk export.",
+  "requestFramePermissions": []
+}
