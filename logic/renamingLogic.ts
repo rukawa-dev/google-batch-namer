@@ -5,8 +5,8 @@ import { FileItem, RenameAction, RenameParams } from '../types';
  * 파일명 변경 로직을 적용한 새 파일 목록을 반환합니다.
  */
 export const applyRenaming = (
-  items: FileItem[], 
-  action: RenameAction, 
+  items: FileItem[],
+  action: RenameAction,
   params: RenameParams
 ): FileItem[] => {
   return items.map((item, index) => {
@@ -49,6 +49,15 @@ export const applyRenaming = (
       case 'NUMBERING':
         const numStr = (start + index).toString().padStart(digits, '0');
         newName = newName + numStr;
+        break;
+      case 'RANDOM':
+        // UUID 형식의 난수 생성 (crypto.randomUUID 또는 폴백)
+        newName = crypto.randomUUID?.() ||
+          'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
         break;
       case 'EXT_DELETE':
         newExt = '';
