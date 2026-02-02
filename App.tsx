@@ -184,12 +184,12 @@ const App: React.FC = () => {
             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </div>
           <h1 className="text-2xl font-black text-white tracking-normal">
-            파일명 일괄 변경
+            LandVerse-Batch-Namer
           </h1>
         </div>
         <div className="flex gap-3">
           <a
-            href="https://github.com/rukawa-dev/google-batch-namer"
+            href="https://github.com/rukawa-dev/landverse-batch-namer"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 h-11 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all duration-300 text-slate-300 hover:text-white"
