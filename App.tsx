@@ -1,18 +1,15 @@
 
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { FileItem, RenameAction, RenameParams } from './types';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { applyRenaming, getFullNewName } from './logic/renamingLogic';
 import { STORAGE_KEY, RENAME_ACTIONS } from './constants';
-import {
-  SerializableFileItem,
-  serializeFileItem,
-  deserializeFileItem
-} from './utils/storage';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { createFileItems } from './utils/fileUtils';
+import { getDuplicateNames } from './utils/duplicateCheck';
 
 declare const JSZip: any;
-
 
 const App: React.FC = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -26,99 +23,14 @@ const App: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
-  const isInitialMount = useRef(true);
 
-  // 초기 로드 시 localStorage에서 상태 복원
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const { files: savedFiles, history: savedHistory, redoStack: savedRedoStack } = JSON.parse(saved);
+  useLocalStorage(files, history, redoStack, setFiles, setHistory, setRedoStack);
 
-        if (savedFiles && Array.isArray(savedFiles)) {
-          const restoredFiles = savedFiles
-            .map((item: SerializableFileItem) => deserializeFileItem(item))
-            .filter((item): item is FileItem => item !== null);
-          setFiles(restoredFiles);
-        }
-
-        if (savedHistory && Array.isArray(savedHistory)) {
-          const restoredHistory = savedHistory
-            .map((historyItems: SerializableFileItem[]) =>
-              historyItems
-                .map(item => deserializeFileItem(item))
-                .filter((item): item is FileItem => item !== null)
-            )
-            .filter((items: FileItem[]) => items.length > 0);
-          setHistory(restoredHistory);
-        }
-
-        if (savedRedoStack && Array.isArray(savedRedoStack)) {
-          const restoredRedoStack = savedRedoStack
-            .map((redoItems: SerializableFileItem[]) =>
-              redoItems
-                .map(item => deserializeFileItem(item))
-                .filter((item): item is FileItem => item !== null)
-            )
-            .filter((items: FileItem[]) => items.length > 0);
-          setRedoStack(restoredRedoStack);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to restore state from localStorage:', e);
-    }
-
-    setTimeout(() => {
-      isInitialMount.current = false;
-    }, 100);
-  }, []);
-
-  // 상태 변경 시 localStorage에 저장
-  useEffect(() => {
-    if (isInitialMount.current) return;
-
-    try {
-      const stateToSave = {
-        files: files.map(serializeFileItem),
-        history: history.map(items => items.map(serializeFileItem)),
-        redoStack: redoStack.map(items => items.map(serializeFileItem)),
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-    } catch (e) {
-      console.error('Failed to save state to localStorage:', e);
-    }
-  }, [files, history, redoStack]);
-
-  const duplicateNames = useMemo(() => {
-    const counts = new Map<string, number>();
-    files.forEach(f => {
-      const name = getFullNewName(f);
-      counts.set(name, (counts.get(name) || 0) + 1);
-    });
-    const duplicates = new Set<string>();
-    counts.forEach((count, name) => {
-      if (count > 1) duplicates.add(name);
-    });
-    return duplicates;
-  }, [files]);
-
+  const duplicateNames = useMemo(() => getDuplicateNames(files), [files]);
   const hasDuplicates = duplicateNames.size > 0;
 
   const handleFiles = (fileList: FileList | File[]) => {
-    const newItems: FileItem[] = Array.from(fileList).map((file: File) => {
-      const parts = file.name.split('.');
-      const ext = parts.length > 1 ? parts.pop()! : '';
-      const name = parts.join('.');
-      return {
-        id: crypto.randomUUID?.() || Math.random().toString(36).substring(2, 11),
-        file,
-        originalName: name,
-        originalExt: ext,
-        newName: name,
-        newExt: ext,
-        path: (file as any).webkitRelativePath || ''
-      };
-    });
+    const newItems = createFileItems(fileList);
     setFiles(prev => [...prev, ...newItems]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
