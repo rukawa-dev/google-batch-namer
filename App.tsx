@@ -8,7 +8,6 @@ import { applyRenaming, getFullNewName } from './logic/renamingLogic';
 // 외부 라이브러리 선언
 declare const JSZip: any;
 
-// 사이드바 액션 구성 데이터
 const RENAME_ACTIONS: { label: string; action: RenameAction; group: 'name' | 'ext' }[] = [
   { label: '이름 지우기', action: 'CLEAR_NAME', group: 'name' },
   { label: '문자열 바꾸기', action: 'REPLACE', group: 'name' },
@@ -25,7 +24,6 @@ const RENAME_ACTIONS: { label: string; action: RenameAction; group: 'name' | 'ex
 ];
 
 const App: React.FC = () => {
-  // 상태 관리
   const [files, setFiles] = useState<FileItem[]>([]);
   const [history, setHistory] = useState<FileItem[][]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,7 +35,6 @@ const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  // 실시간 중복 감지 로직
   const duplicateNames = useMemo(() => {
     const counts = new Map<string, number>();
     files.forEach(f => {
@@ -53,7 +50,6 @@ const App: React.FC = () => {
 
   const hasDuplicates = duplicateNames.size > 0;
 
-  // 파일 처리 로직
   const handleFiles = (fileList: FileList | File[]) => {
     const newItems: FileItem[] = Array.from(fileList).map((file: File) => {
       const parts = file.name.split('.');
@@ -73,7 +69,6 @@ const App: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 드래그 앤 드롭 핸들러
   const onDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.types.includes('Files')) {
@@ -100,7 +95,6 @@ const App: React.FC = () => {
     if (e.dataTransfer.files?.length > 0) handleFiles(e.dataTransfer.files);
   };
 
-  // 행 순서 변경 핸들러
   const handleRowDragOver = (e: React.DragEvent, idx: number) => {
     e.preventDefault();
     if (draggedRowIndex === null || draggedRowIndex === idx) return;
@@ -111,7 +105,6 @@ const App: React.FC = () => {
     setFiles(newFiles);
   };
 
-  // 액션 실행 핸들러
   const handleActionClick = (action: RenameAction) => {
     setCurrentAction(action);
     const noParamActions: RenameAction[] = ['CLEAR_NAME', 'CLEAR_BRACKETS', 'NUMBERS_ONLY', 'REMOVE_NUMBERS', 'EXT_DELETE'];
@@ -134,7 +127,6 @@ const App: React.FC = () => {
     }
   };
 
-  // 기타 유틸리티
   const undo = () => {
     if (history.length === 0) return;
     setFiles(history[history.length - 1]);
@@ -155,18 +147,11 @@ const App: React.FC = () => {
     });
     const content = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(content);
-    
     const now = new Date();
-    const timestamp = now.getFullYear().toString() + 
-                     (now.getMonth() + 1).toString().padStart(2, '0') + 
-                     now.getDate().toString().padStart(2, '0') + '_' +
-                     now.getHours().toString().padStart(2, '0') +
-                     now.getMinutes().toString().padStart(2, '0') +
-                     now.getSeconds().toString().padStart(2, '0');
-
+    const timestamp = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0');
     const link = document.createElement('a');
     link.href = url;
-    link.download = `파일명_일괄_변경_${timestamp}.zip`;
+    link.download = `BatchRenamed_${timestamp}.zip`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -183,36 +168,35 @@ const App: React.FC = () => {
       onDrop={onDrop}
     >
       {/* 업로드 오버레이 */}
-      <div className={`absolute inset-0 z-50 bg-indigo-600/10 backdrop-blur-sm border-4 border-dashed border-indigo-500/50 flex items-center justify-center transition-all duration-300 pointer-events-none ${isDragging ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="bg-gray-900 border border-white/5 p-12 rounded-3xl shadow-2xl flex flex-col items-center gap-4">
-          <div className="bg-indigo-500/20 p-6 rounded-2xl text-indigo-400">
-            <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+      <div className={`absolute inset-0 z-50 bg-indigo-600/20 backdrop-blur-md border-8 border-dashed border-indigo-500/50 flex items-center justify-center transition-all duration-300 pointer-events-none ${isDragging ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="bg-gray-900 border border-white/10 p-20 rounded-[40px] shadow-2xl flex flex-col items-center gap-6">
+          <div className="bg-indigo-500/20 p-8 rounded-3xl text-indigo-400">
+            <svg className="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
           </div>
-          <p className="text-2xl font-bold text-white">파일을 놓아주세요</p>
+          <p className="text-4xl font-black text-white">파일을 놓아주세요</p>
         </div>
       </div>
 
       {/* 헤더 */}
-      <header className="bg-gray-950/80 premium-blur border-b border-white/5 px-6 py-3 flex items-center justify-between shrink-0 z-20">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-900/30">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+      <header className="bg-gray-950/80 premium-blur border-b border-white/10 px-8 py-5 flex items-center justify-between shrink-0 z-20">
+        <div className="flex items-center gap-4">
+          <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-900/40">
+            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </div>
-          <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-            파일명 일괄 변경 <span className="text-[9px] font-medium bg-white/5 border border-white/10 px-1.5 py-0.5 rounded uppercase text-slate-400">v1.0</span>
+          <h1 className="text-2xl font-black text-white tracking-tighter">
+            파일명 일괄 변경 <span className="text-xs font-bold bg-indigo-500/20 border border-indigo-500/30 px-2 py-0.5 rounded-md uppercase text-indigo-300 ml-2">PREMIUM</span>
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
            <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>파일 추가</Button>
            <input type="file" multiple className="hidden" ref={fileInputRef} onChange={e => e.target.files && handleFiles(e.target.files)} />
            <Button 
             variant={hasDuplicates ? "danger" : "primary"} 
             size="sm" 
             onClick={exportAsZip} 
-            disabled={files.length === 0} 
-            className="px-4"
+            disabled={files.length === 0}
            >
-             {hasDuplicates ? "중복 발생" : "다운로드(ZIP)"}
+             {hasDuplicates ? "중복 발생 (수정 필요)" : "전체 다운로드 (ZIP)"}
            </Button>
         </div>
       </header>
@@ -220,16 +204,16 @@ const App: React.FC = () => {
       {/* 메인 레이아웃 */}
       <main className="flex-1 flex overflow-hidden">
         {/* 사이드바 */}
-        <aside className="w-56 bg-gray-950 border-r border-white/5 overflow-y-auto p-4 flex flex-col gap-4 shrink-0">
+        <aside className="w-72 bg-gray-950 border-r border-white/5 overflow-y-auto p-6 flex flex-col gap-8 shrink-0">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">이름 변경</p>
-            <div className="space-y-0.5">
+            <p className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-1">이름 변경 규칙</p>
+            <div className="space-y-1.5">
               {RENAME_ACTIONS.filter(a => a.group === 'name').map(item => (
                 <Button 
                   key={item.action} 
                   variant="ghost" 
                   size="sm"
-                  className="w-full justify-start text-[13px] hover:bg-white/5 h-8 px-2" 
+                  className="w-full justify-start text-[17px] font-medium hover:bg-indigo-500/10 hover:text-indigo-300 h-12 px-4 rounded-xl border border-transparent hover:border-indigo-500/20" 
                   onClick={() => handleActionClick(item.action)}
                 >
                   {item.label}
@@ -237,15 +221,15 @@ const App: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="border-t border-white/5 pt-4">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">확장자 관리</p>
-            <div className="space-y-0.5">
+          <div className="border-t border-white/5 pt-8">
+            <p className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-1">확장자 관리</p>
+            <div className="space-y-1.5">
               {RENAME_ACTIONS.filter(a => a.group === 'ext').map(item => (
                 <Button 
                   key={item.action} 
                   variant="ghost" 
                   size="sm"
-                  className="w-full justify-start text-[13px] hover:bg-white/5 h-8 px-2" 
+                  className="w-full justify-start text-[17px] font-medium hover:bg-emerald-500/10 hover:text-emerald-300 h-12 px-4 rounded-xl border border-transparent hover:border-emerald-500/20" 
                   onClick={() => handleActionClick(item.action)}
                 >
                   {item.label}
@@ -257,34 +241,33 @@ const App: React.FC = () => {
 
         {/* 리스트 영역 */}
         <section className="flex-1 flex flex-col bg-gray-950 overflow-hidden">
-           {/* 중복 경고 배너 */}
            {hasDuplicates && (
-             <div className="mx-6 mt-4 p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
-               <div className="bg-rose-500 p-1 rounded-full">
-                 <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+             <div className="mx-8 mt-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-300">
+               <div className="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-900/20">
+                 <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                </div>
-               <p className="text-[11px] font-bold text-rose-400">주의: 중복된 파일명이 존재합니다. 이대로 저장하면 파일이 덮어씌워집니다.</p>
+               <p className="text-lg font-bold text-rose-400 italic">주의: 중복된 파일명이 존재합니다. 동일한 이름으로 저장하면 파일이 덮어씌워질 수 있습니다.</p>
              </div>
            )}
 
-           <div className="flex-1 overflow-auto px-6 py-2">
+           <div className="flex-1 overflow-auto px-8 py-4">
               <table className="w-full text-left border-collapse table-fixed">
                 <thead className="sticky top-0 bg-gray-950/95 premium-blur z-10">
-                  <tr className="border-b border-white/5">
-                    <th className="px-3 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-16 text-center">번호</th>
-                    <th className="px-3 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[calc(50%-32px)]">현재 이름</th>
-                    <th className="px-3 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[calc(50%-32px)]">바뀔 이름</th>
+                  <tr className="border-b border-white/10">
+                    <th className="px-4 py-5 text-sm font-black text-slate-500 uppercase tracking-widest w-24 text-center">No.</th>
+                    <th className="px-4 py-5 text-sm font-black text-slate-500 uppercase tracking-widest w-[calc(50%-48px)]">현재 파일명</th>
+                    <th className="px-4 py-5 text-sm font-black text-slate-500 uppercase tracking-widest w-[calc(50%-48px)]">바뀔 파일명</th>
                   </tr>
                 </thead>
-                <tbody className="">
+                <tbody>
                   {files.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-32 text-center opacity-40">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="p-6 bg-white/5 rounded-full border border-white/5">
-                            <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                      <td colSpan={3} className="px-4 py-48 text-center opacity-30">
+                        <div className="flex flex-col items-center gap-6">
+                          <div className="p-10 bg-white/5 rounded-full border border-white/5">
+                            <svg className="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
                           </div>
-                          <p className="text-lg font-medium">목록이 비어있습니다</p>
+                          <p className="text-3xl font-light">작업할 파일을 여기에 끌어다 놓으세요</p>
                         </div>
                       </td>
                     </tr>
@@ -300,18 +283,18 @@ const App: React.FC = () => {
                           onDragStart={() => setDraggedRowIndex(idx)}
                           onDragOver={e => handleRowDragOver(e, idx)}
                           onDragEnd={() => setDraggedRowIndex(null)}
-                          className={`relative transition-all group cursor-move select-none border-b border-white/[0.03] ${isDragged ? 'bg-indigo-600/10 opacity-50' : 'hover:bg-white/[0.02]'} ${isDuplicate ? 'bg-rose-500/[0.02]' : ''}`}
+                          className={`relative transition-all group cursor-move select-none border-b border-white/[0.04] h-16 ${isDragged ? 'bg-indigo-600/20 opacity-50' : 'hover:bg-white/[0.03]'} ${isDuplicate ? 'bg-rose-500/[0.04]' : ''}`}
                         >
-                          <td className="relative px-3 py-2 text-[12px] text-slate-500 text-center mono truncate flex items-center justify-center gap-2">
-                            <div className={`absolute left-0 top-1 bottom-1 w-[2px] rounded-r-full transition-transform origin-center ${isDuplicate ? 'bg-rose-500 scale-y-100' : 'bg-indigo-500 scale-y-0 group-hover:scale-y-100'}`}></div>
-                            <svg className="h-3 w-3 opacity-0 group-hover:opacity-30 transition-opacity" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
-                            <span className={`${isDuplicate ? 'text-rose-400' : 'group-hover:text-indigo-400'} transition-colors`}>{idx + 1}</span>
+                          <td className="relative px-4 py-3 text-lg text-slate-500 text-center mono truncate flex items-center justify-center gap-3">
+                            <div className={`absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full transition-transform origin-center ${isDuplicate ? 'bg-rose-500 scale-y-100' : 'bg-indigo-500 scale-y-0 group-hover:scale-y-100'}`}></div>
+                            <svg className="h-4 w-4 opacity-0 group-hover:opacity-40 transition-opacity" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
+                            <span className={`${isDuplicate ? 'text-rose-400 font-bold' : 'group-hover:text-indigo-400'} transition-colors`}>{idx + 1}</span>
                           </td>
-                          <td className="px-3 py-2 text-[13px] text-slate-400 truncate font-medium group-hover:text-slate-300 transition-colors">{item.originalName}<span className="text-slate-600">.{item.originalExt}</span></td>
-                          <td className={`px-3 py-2 text-[13px] font-semibold truncate transition-colors flex items-center gap-2 ${isDuplicate ? 'text-rose-400' : hasChanged ? 'text-indigo-400' : 'text-slate-500'}`}>
+                          <td className="px-4 py-3 text-[17px] text-slate-400 truncate font-medium group-hover:text-slate-200 transition-colors">{item.originalName}<span className="text-slate-600">.{item.originalExt}</span></td>
+                          <td className={`px-4 py-3 text-[18px] font-bold truncate transition-colors flex items-center gap-3 ${isDuplicate ? 'text-rose-400' : hasChanged ? 'text-indigo-400' : 'text-slate-500'}`}>
                             {fullNewName}
                             {isDuplicate && (
-                               <svg className="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                               <svg className="h-5 w-5 shrink-0 text-rose-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                             )}
                           </td>
                         </tr>
@@ -323,16 +306,16 @@ const App: React.FC = () => {
            </div>
 
            {/* 푸터 통계 */}
-           <footer className="bg-gray-900 border-t border-white/5 px-6 py-2.5 flex justify-between items-center text-[10px] font-semibold text-slate-500 tracking-wider shrink-0 z-10">
-             <div className="flex gap-2">
-               <Button variant="ghost" size="sm" onClick={undo} disabled={history.length === 0} className="text-[10px] px-2 h-7 border border-white/5">작업 취소</Button>
-               <Button variant="ghost" size="sm" onClick={() => {setFiles([]); setHistory([]);}} className="text-red-400/70 hover:bg-red-500/10 hover:text-red-300 text-[10px] px-2 h-7 border border-red-500/10">목록 비우기</Button>
+           <footer className="bg-gray-900 border-t border-white/10 px-8 py-4 flex justify-between items-center shrink-0 z-10">
+             <div className="flex gap-4">
+               <Button variant="secondary" size="sm" onClick={undo} disabled={history.length === 0} className="text-base font-bold">작업 취소 (Undo)</Button>
+               <Button variant="ghost" size="sm" onClick={() => {if(confirm('목록을 모두 비우시겠습니까?')){setFiles([]); setHistory([]);}}} className="text-red-400 hover:bg-red-500/10 text-base font-bold">목록 비우기</Button>
              </div>
-             <div className="flex gap-6 items-center">
-               <span className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-slate-700"></span>총 {files.length}개 파일</span>
-               <span className={`flex items-center gap-2 transition-colors ${hasDuplicates ? 'text-rose-400' : 'text-indigo-400/80'}`}>
-                 <span className={`w-1 h-1 rounded-full animate-pulse ${hasDuplicates ? 'bg-rose-500' : 'bg-indigo-500'}`}></span>
-                 {hasDuplicates ? `중복 발생: ${duplicateNames.size}종` : `변경 예정: ${changedCount}개`}
+             <div className="flex gap-10 items-center text-lg font-bold text-slate-400">
+               <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-slate-600"></span>총 {files.length}개 항목</span>
+               <span className={`flex items-center gap-3 transition-colors ${hasDuplicates ? 'text-rose-400' : 'text-indigo-400'}`}>
+                 <span className={`w-2 h-2 rounded-full animate-pulse ${hasDuplicates ? 'bg-rose-500' : 'bg-indigo-500'}`}></span>
+                 {hasDuplicates ? `중복 감지: ${duplicateNames.size}건` : `변경됨: ${changedCount}건`}
                </span>
              </div>
            </footer>
@@ -343,46 +326,46 @@ const App: React.FC = () => {
       <Modal 
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
-        title={RENAME_ACTIONS.find(a => a.action === currentAction)?.label || '설정'}
+        title={RENAME_ACTIONS.find(a => a.action === currentAction)?.label || '이름 변경 설정'}
         onConfirm={() => currentAction && executeAction(currentAction, params)}
       >
-        <div className="space-y-6">
+        <div className="space-y-8">
           {currentAction === 'REPLACE' && (
-            <div className="grid gap-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">찾을 단어</label>
-                <input className="w-full px-4 py-3 bg-gray-950 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-slate-200" value={params.search} onChange={e => setParams({...params, search: e.target.value})} onKeyDown={handleKeyDown} placeholder="원본 텍스트" autoFocus />
+            <div className="grid gap-8">
+              <div className="space-y-3">
+                <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 italic">원본 텍스트 (찾을 내용)</label>
+                <input className="w-full px-6 py-4 bg-gray-950 border border-white/10 rounded-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none text-white text-xl font-medium" value={params.search} onChange={e => setParams({...params, search: e.target.value})} onKeyDown={handleKeyDown} placeholder="예: 구버전" autoFocus />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">바꿀 단어</label>
-                <input className="w-full px-4 py-3 bg-gray-950 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-slate-200" value={params.replace} onChange={e => setParams({...params, replace: e.target.value})} onKeyDown={handleKeyDown} placeholder="새 텍스트" />
+              <div className="space-y-3">
+                <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 italic">변경 텍스트 (바꿀 내용)</label>
+                <input className="w-full px-6 py-4 bg-gray-950 border border-white/10 rounded-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none text-white text-xl font-medium" value={params.replace} onChange={e => setParams({...params, replace: e.target.value})} onKeyDown={handleKeyDown} placeholder="예: 신버전" />
               </div>
             </div>
           )}
 
           {['PREFIX', 'SUFFIX', 'EXT_ADD', 'EXT_CHANGE'].includes(currentAction || '') && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">{currentAction?.startsWith('EXT') ? '확장자' : '추가할 텍스트'}</label>
-              <input className="w-full px-4 py-3 bg-gray-950 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-slate-200" value={params.text} onChange={e => setParams({...params, text: e.target.value})} onKeyDown={handleKeyDown} placeholder={currentAction?.startsWith('EXT') ? "png" : "(수정)"} autoFocus />
+            <div className="space-y-3">
+              <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 italic">{currentAction?.startsWith('EXT') ? '변경할 확장자' : '추가할 내용'}</label>
+              <input className="w-full px-6 py-4 bg-gray-950 border border-white/10 rounded-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none text-white text-xl font-medium" value={params.text} onChange={e => setParams({...params, text: e.target.value})} onKeyDown={handleKeyDown} placeholder={currentAction?.startsWith('EXT') ? "png (점 없이 입력)" : "내용 입력"} autoFocus />
             </div>
           )}
 
           {currentAction === 'PADDING' && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">최소 자릿수</label>
-              <input type="number" className="w-full px-4 py-3 bg-gray-950 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-slate-200" value={params.digits} onChange={e => setParams({...params, digits: parseInt(e.target.value) || 0})} onKeyDown={handleKeyDown} autoFocus />
+            <div className="space-y-3">
+              <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 italic">최소 자릿수 (부족하면 앞에 0을 채움)</label>
+              <input type="number" className="w-full px-6 py-4 bg-gray-950 border border-white/10 rounded-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none text-white text-xl font-medium" value={params.digits} onChange={e => setParams({...params, digits: parseInt(e.target.value) || 0})} onKeyDown={handleKeyDown} autoFocus />
             </div>
           )}
 
           {currentAction === 'NUMBERING' && (
-            <div className="grid grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">시작 번호</label>
-                <input type="number" className="w-full px-4 py-3 bg-gray-950 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-slate-200" value={params.start} onChange={e => setParams({...params, start: parseInt(e.target.value) || 1})} onKeyDown={handleKeyDown} />
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 italic">시작 번호</label>
+                <input type="number" className="w-full px-6 py-4 bg-gray-950 border border-white/10 rounded-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none text-white text-xl font-medium" value={params.start} onChange={e => setParams({...params, start: parseInt(e.target.value) || 1})} onKeyDown={handleKeyDown} />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">번호 자릿수</label>
-                <input type="number" className="w-full px-4 py-3 bg-gray-950 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-slate-200" value={params.digits} onChange={e => setParams({...params, digits: parseInt(e.target.value) || 1})} onKeyDown={handleKeyDown} />
+              <div className="space-y-3">
+                <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 italic">번호 자릿수</label>
+                <input type="number" className="w-full px-6 py-4 bg-gray-950 border border-white/10 rounded-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none text-white text-xl font-medium" value={params.digits} onChange={e => setParams({...params, digits: parseInt(e.target.value) || 1})} onKeyDown={handleKeyDown} />
               </div>
             </div>
           )}
