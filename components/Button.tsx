@@ -13,14 +13,14 @@ export const Button: React.FC<ButtonProps> = ({
   className = '', 
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-medium transition-all rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-30 disabled:pointer-events-none";
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:opacity-20 disabled:pointer-events-none";
   
   const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-500 focus:ring-blue-500 shadow-lg shadow-blue-900/20",
-    secondary: "bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 focus:ring-slate-500",
-    danger: "bg-red-600 text-white hover:bg-red-500 focus:ring-red-500",
+    primary: "bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-500 shadow-md shadow-indigo-900/10 border border-indigo-400/20",
+    secondary: "bg-slate-800/50 text-slate-200 border border-slate-700/50 hover:bg-slate-700 focus:ring-slate-500 hover:border-slate-600",
+    danger: "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 focus:ring-red-500",
     ghost: "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-slate-100",
-    outline: "bg-transparent border-2 border-blue-500 text-blue-500 hover:bg-blue-900/30 focus:ring-blue-500"
+    outline: "bg-transparent border border-indigo-500/50 text-indigo-400 hover:bg-indigo-950/30 focus:ring-indigo-500"
   };
 
   const sizes = {

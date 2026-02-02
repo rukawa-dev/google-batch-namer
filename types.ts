@@ -16,6 +16,7 @@ export type RenameAction =
   | 'CLEAR_NAME' 
   | 'CLEAR_POS' 
   | 'CLEAR_BRACKETS' 
+  | 'REMOVE_NUMBERS'
   | 'NUMBERS_ONLY' 
   | 'PADDING' 
   | 'NUMBERING' 
